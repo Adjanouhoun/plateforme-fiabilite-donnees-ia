@@ -24,6 +24,7 @@ en sprints documentés.
 - [Sprint 1 — Socle local et modèle commun](docs/sprints/sprint-01.md)
 - [Sprint 2 — Connecteur Mobility](docs/sprints/sprint-02.md)
 - [Sprint 3 — Contrôles et incidents déterministes](docs/sprints/sprint-03.md)
+- [Sprint 4 — Interface Streamlit multi-pipelines](docs/sprints/sprint-04.md)
 - [Contrat fonctionnel minimal](docs/contracts/contrat-fonctionnel-minimal.md)
 - [Mapping du connecteur Mobility](docs/contracts/mapping-mobility.md)
 - [Règles de qualité et incidents](docs/contracts/regles-qualite-incidents.md)
@@ -71,6 +72,17 @@ Vérifier les endpoints :
 http://127.0.0.1:8090/health/live
 http://127.0.0.1:8090/health/ready
 ```
+
+Démarrer le tableau de bord :
+
+```bash
+docker compose up -d dashboard
+```
+
+L'interface est disponible sur `http://127.0.0.1:8501`. Par défaut,
+`OPERATOR_NAME` est vide et les incidents sont consultables en lecture seule.
+Renseigner explicitement cette variable dans `.env` pour autoriser les actions
+d'acquittement et de clôture en environnement local.
 
 ## Validation locale
 

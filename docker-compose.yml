@@ -77,6 +77,40 @@ services:
       retries: 5
     restart: unless-stopped
 
+  dashboard:
+    build:
+      context: .
+      target: runtime
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      OPERATOR_NAME: ${OPERATOR_NAME:-}
+    command:
+      - streamlit
+      - run
+      - src/pfpd_ia/dashboard/app.py
+      - --server.address=0.0.0.0
+      - --server.port=8501
+      - --server.headless=true
+    ports:
+      - "127.0.0.1:8501:8501"
+    depends_on:
+      postgres_observability:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import urllib.request;
+          urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   test:
     build:
       context: .
