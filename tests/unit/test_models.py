@@ -26,3 +26,9 @@ def test_idempotency_constraints_exist() -> None:
 
     assert "uq_run_pipeline_external" in run_constraints
     assert "uq_check_pipeline_idempotency" in check_constraints
+
+
+def test_active_incident_deduplication_index_exists() -> None:
+    indexes = {index.name for index in Base.metadata.tables["observability.incidents"].indexes}
+
+    assert "uq_incidents_active_deduplication" in indexes
