@@ -51,6 +51,27 @@ services:
         condition: service_healthy
     profiles: ["tools"]
 
+  mobility_lineage_collector:
+    build:
+      context: .
+      target: runtime
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      MOBILITY_DBT_MANIFEST_PATH: /artifacts/mobility/manifest.json
+      MOBILITY_DBT_PROJECT_NAME: ${MOBILITY_DBT_PROJECT_NAME:-dbt_mobility}
+    volumes:
+      - type: bind
+        source: ${MOBILITY_DBT_MANIFEST_HOST_PATH:-../data-pipeline-mobility/dbt_mobility/target/manifest.json}
+        target: /artifacts/mobility/manifest.json
+        read_only: true
+    command: ["python", "-m", "pfpd_ia.connectors.mobility.lineage_cli"]
+    depends_on:
+      postgres_observability:
+        condition: service_healthy
+    profiles: ["tools"]
+
   api:
     build:
       context: .

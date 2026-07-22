@@ -461,6 +461,60 @@ def list_lineage(session: Session, pipeline_key: str) -> list[dict[str, Any]]:
     )
 
 
+def list_incident_exposure(session: Session, pipeline_key: str) -> list[dict[str, Any]]:
+    """Retourne l'actif déclencheur et ses actifs aval prouvés, sans impact métier."""
+    return list(
+        session.execute(
+            text(
+                """
+                WITH RECURSIVE exposure AS (
+                    SELECT
+                        i.id AS incident_id,
+                        q.asset_id,
+                        0 AS depth,
+                        ARRAY[q.asset_id] AS visited,
+                        NULL::varchar AS evidence_origin
+                    FROM observability.incidents i
+                    JOIN observability.pipelines p ON p.id = i.pipeline_id
+                    JOIN observability.quality_checks q ON q.id = i.triggering_check_id
+                    WHERE p.pipeline_key = :pipeline_key
+
+                    UNION ALL
+
+                    SELECT
+                        exposure.incident_id,
+                        edge.target_asset_id,
+                        exposure.depth + 1,
+                        exposure.visited || edge.target_asset_id,
+                        edge.evidence_origin
+                    FROM exposure
+                    JOIN observability.lineage_edges edge
+                      ON edge.source_asset_id = exposure.asset_id
+                    WHERE NOT edge.target_asset_id = ANY(exposure.visited)
+                ),
+                nearest AS (
+                    SELECT DISTINCT ON (incident_id, asset_id)
+                        incident_id, asset_id, depth, evidence_origin
+                    FROM exposure
+                    ORDER BY incident_id, asset_id, depth
+                )
+                SELECT
+                    nearest.incident_id,
+                    nearest.depth,
+                    asset.name AS asset_name,
+                    asset.asset_type,
+                    asset.logical_location,
+                    nearest.evidence_origin
+                FROM nearest
+                JOIN observability.data_assets asset ON asset.id = nearest.asset_id
+                ORDER BY nearest.incident_id, nearest.depth, asset.name
+                """
+            ),
+            {"pipeline_key": pipeline_key},
+        ).mappings()
+    )
+
+
 def acknowledge(
     session_factory: sessionmaker[Session], *, incident_id: uuid.UUID, actor: str
 ) -> None:

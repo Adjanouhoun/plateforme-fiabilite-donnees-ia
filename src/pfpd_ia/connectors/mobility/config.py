@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from pydantic import Field, SecretStr
@@ -23,6 +24,19 @@ class MobilitySettings(BaseSettings):
     mobility_error_max_length: int = Field(default=2000, ge=256, le=10_000)
 
 
+class MobilityLineageSettings(BaseSettings):
+    """Contrat explicite de l'artefact dbt utilisé comme preuve structurelle."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    mobility_dbt_manifest_path: Path
+    mobility_dbt_project_name: str = Field(default="dbt_mobility", min_length=1)
+
+
 @dataclass(frozen=True)
 class PipelineDefinition:
     dag_id: str
@@ -30,6 +44,7 @@ class PipelineDefinition:
     display_name: str
     description: str
     expected_frequency_minutes: int
+    dbt_source_unique_ids: tuple[str, ...]
 
     @property
     def asset_external_id(self) -> str:
@@ -39,6 +54,10 @@ class PipelineDefinition:
     def asset_logical_location(self) -> str:
         return f"schema_analytics.fct_pipeline_runs?dag_id={self.dag_id}"
 
+    @property
+    def monitoring_asset_dbt_unique_id(self) -> str:
+        return "model.dbt_mobility.fct_pipeline_runs"
+
 
 PIPELINE_DEFINITIONS = (
     PipelineDefinition(
@@ -47,6 +66,10 @@ PIPELINE_DEFINITIONS = (
         display_name="Vélib",
         description="Ingestion horaire des disponibilités Vélib parisiennes.",
         expected_frequency_minutes=60,
+        dbt_source_unique_ids=(
+            "source.dbt_mobility.raw_data.stg_raw_stations",
+            "source.dbt_mobility.monitoring_data.ingestion_runs",
+        ),
     ),
     PipelineDefinition(
         dag_id="ingest_paris_road_traffic",
@@ -54,6 +77,10 @@ PIPELINE_DEFINITIONS = (
         display_name="Trafic routier",
         description="Ingestion horaire des comptages routiers permanents parisiens.",
         expected_frequency_minutes=60,
+        dbt_source_unique_ids=(
+            "source.dbt_mobility.road_traffic_raw.road_traffic_observations",
+            "source.dbt_mobility.monitoring_data.traffic_ingestion_runs",
+        ),
     ),
 )
 

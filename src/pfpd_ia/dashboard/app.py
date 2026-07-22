@@ -18,6 +18,7 @@ from pfpd_ia.dashboard.queries import (
     list_assets,
     list_checks,
     list_incident_events,
+    list_incident_exposure,
     list_incidents,
     list_lineage,
     list_pipeline_summaries,
@@ -292,6 +293,7 @@ def _render_incidents(pipeline_key: str, operator_name: str) -> None:
     factory = get_session_factory()
     with factory() as session:
         incidents = list_incidents(session, pipeline_key)
+        exposure = list_incident_exposure(session, pipeline_key)
         events_by_incident = {
             incident["id"]: list_incident_events(session, incident["id"]) for incident in incidents
         }
@@ -303,6 +305,10 @@ def _render_incidents(pipeline_key: str, operator_name: str) -> None:
             "Mode lecture seule : configurez OPERATOR_NAME pour acquitter ou clôturer un incident."
         )
 
+    exposure_by_incident = {
+        incident["id"]: [row for row in exposure if row["incident_id"] == incident["id"]]
+        for incident in incidents
+    }
     for incident in incidents:
         label = (
             f"{SEVERITY_LABELS.get(incident['severity'], incident['severity'])} — "
@@ -317,6 +323,28 @@ def _render_incidents(pipeline_key: str, operator_name: str) -> None:
                 "Impact métier : "
                 + (incident["business_impact"] or "Inconnu — aucune mesure ou déclaration")
             )
+            st.caption(
+                "L’exposition technique ci-dessous est calculée depuis le lineage prouvé. "
+                "Elle ne constitue pas un impact métier mesuré."
+            )
+            incident_exposure = exposure_by_incident[incident["id"]]
+            if incident_exposure:
+                st.dataframe(
+                    [
+                        {
+                            "Niveau": row["depth"],
+                            "Actif": row["asset_name"],
+                            "Type": row["asset_type"],
+                            "Emplacement": row["logical_location"],
+                            "Preuve": row["evidence_origin"] or "Actif du contrôle déclencheur",
+                        }
+                        for row in incident_exposure
+                    ],
+                    hide_index=True,
+                    width="stretch",
+                )
+            else:
+                st.info("Aucune exposition technique calculable à partir des preuves disponibles.")
             events = events_by_incident[incident["id"]]
             st.dataframe(
                 [

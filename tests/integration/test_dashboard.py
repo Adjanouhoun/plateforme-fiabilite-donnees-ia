@@ -10,6 +10,7 @@ from pfpd_ia.dashboard.queries import (
     get_portfolio_kpis,
     list_assets,
     list_checks,
+    list_incident_exposure,
     list_incidents,
     list_lineage,
     list_pipeline_summaries,
@@ -23,6 +24,7 @@ from pfpd_ia.models import (
     Incident,
     IncidentEvent,
     IncidentStatus,
+    LineageEdge,
     Pipeline,
     PipelineRun,
     QualityCheck,
@@ -75,6 +77,29 @@ def test_dashboard_queries_use_only_the_common_model() -> None:
         )
         session.add_all([run, asset])
         session.flush()
+        downstream_asset = DataAsset(
+            pipeline_id=pipeline.id,
+            external_asset_id="downstream",
+            name="Actif aval",
+            asset_type="dbt_model",
+            source_system="dbt",
+            logical_location="test.downstream",
+            schema_contract={"proof_type": "dbt_manifest"},
+            owner="test",
+            sensitivity="internal",
+            is_active=True,
+        )
+        session.add(downstream_asset)
+        session.flush()
+        session.add(
+            LineageEdge(
+                source_asset_id=asset.id,
+                target_asset_id=downstream_asset.id,
+                transformation_type="dbt_dependency",
+                evidence_origin="dbt_manifest:test:runs->downstream",
+                observed_at=now,
+            )
+        )
         check = QualityCheck(
             pipeline_id=pipeline.id,
             asset_id=asset.id,
@@ -124,8 +149,13 @@ def test_dashboard_queries_use_only_the_common_model() -> None:
         assert len(list_runs(session, pipeline_key)) == 1
         assert len(list_checks(session, pipeline_key)) == 1
         assert len(list_incidents(session, pipeline_key)) == 1
-        assert len(list_assets(session, pipeline_key)) == 1
-        assert list_lineage(session, pipeline_key) == []
+        assert len(list_assets(session, pipeline_key)) == 2
+        assert len(list_lineage(session, pipeline_key)) == 1
+        exposure = list_incident_exposure(session, pipeline_key)
+        assert [(row["asset_name"], row["depth"]) for row in exposure] == [
+            ("Exécutions", 0),
+            ("Actif aval", 1),
+        ]
         kpis = get_portfolio_kpis(
             session,
             pipeline_keys=[pipeline_key],
