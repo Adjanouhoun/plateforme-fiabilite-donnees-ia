@@ -23,8 +23,10 @@ en sprints documentés.
 - [Sprint 0 — État des lieux et cadrage](docs/sprints/sprint-00.md)
 - [Sprint 1 — Socle local et modèle commun](docs/sprints/sprint-01.md)
 - [Sprint 2 — Connecteur Mobility](docs/sprints/sprint-02.md)
+- [Sprint 3 — Contrôles et incidents déterministes](docs/sprints/sprint-03.md)
 - [Contrat fonctionnel minimal](docs/contracts/contrat-fonctionnel-minimal.md)
 - [Mapping du connecteur Mobility](docs/contracts/mapping-mobility.md)
+- [Règles de qualité et incidents](docs/contracts/regles-qualite-incidents.md)
 - [Feuille de route des sprints](docs/roadmap.md)
 - [Modèle de données commun](docs/architecture/modele-commun.md)
 
@@ -95,6 +97,7 @@ docker compose --profile tools run --rm mobility_collector
 ```
 
 Le rapport JSON indique le nombre de lignes lues, insérées ou déjà présentes,
+les contrôles créés, les échecs, les absences de mesure, les incidents actifs
 ainsi que tout DAG ou statut non reconnu. Il n'affiche ni le DSN ni les messages
 d'erreur sources. Le mapping exact et les limites du connecteur sont décrits
 dans [le contrat Mobility](docs/contracts/mapping-mobility.md).

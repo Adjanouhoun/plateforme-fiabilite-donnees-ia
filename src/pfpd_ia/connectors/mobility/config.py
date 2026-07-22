@@ -31,6 +31,14 @@ class PipelineDefinition:
     description: str
     expected_frequency_minutes: int
 
+    @property
+    def asset_external_id(self) -> str:
+        return "pipeline-runs"
+
+    @property
+    def asset_logical_location(self) -> str:
+        return f"schema_analytics.fct_pipeline_runs?dag_id={self.dag_id}"
+
 
 PIPELINE_DEFINITIONS = (
     PipelineDefinition(
@@ -48,3 +56,15 @@ PIPELINE_DEFINITIONS = (
         expected_frequency_minutes=60,
     ),
 )
+
+EXPECTED_SOURCE_COLUMNS: dict[str, tuple[str, ...]] = {
+    "pipeline_run_id": ("text", "character varying"),
+    "dag_id": ("text", "character varying"),
+    "started_at": ("timestamp with time zone",),
+    "finished_at": ("timestamp with time zone",),
+    "status": ("text", "character varying"),
+    "records_received": ("smallint", "integer", "bigint", "numeric"),
+    "changed_record_count": ("smallint", "integer", "bigint", "numeric"),
+    "records_unchanged": ("smallint", "integer", "bigint", "numeric"),
+    "error_message": ("text", "character varying"),
+}

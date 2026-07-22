@@ -18,6 +18,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -207,6 +208,12 @@ class Incident(TimestampMixin, Base):
             "closed_at IS NULL OR closed_at >= opened_at", name="valid_incident_period"
         ),
         Index("ix_incidents_pipeline_status", "pipeline_id", "status"),
+        Index(
+            "uq_incidents_active_deduplication",
+            "deduplication_key",
+            unique=True,
+            postgresql_where=text("status IN ('open', 'acknowledged')"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -216,6 +223,7 @@ class Incident(TimestampMixin, Base):
     triggering_check_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("observability.quality_checks.id", ondelete="RESTRICT")
     )
+    deduplication_key: Mapped[str] = mapped_column(String(255), nullable=False)
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     severity: Mapped[Severity] = mapped_column(
         enum_column(Severity, "incident_severity"), nullable=False
