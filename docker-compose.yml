@@ -32,6 +32,25 @@ services:
         condition: service_healthy
     profiles: ["tools"]
 
+  mobility_collector:
+    build:
+      context: .
+      target: runtime
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      MOBILITY_DATABASE_URL: ${MOBILITY_DATABASE_URL:-}
+      MOBILITY_OWNER: ${MOBILITY_OWNER:-data-engineering}
+      MOBILITY_ENVIRONMENT: ${MOBILITY_ENVIRONMENT:-local}
+      MOBILITY_CRITICALITY: ${MOBILITY_CRITICALITY:-medium}
+      MOBILITY_ERROR_MAX_LENGTH: ${MOBILITY_ERROR_MAX_LENGTH:-2000}
+    command: ["python", "-m", "pfpd_ia.connectors.mobility.cli"]
+    depends_on:
+      postgres_observability:
+        condition: service_healthy
+    profiles: ["tools"]
+
   api:
     build:
       context: .
