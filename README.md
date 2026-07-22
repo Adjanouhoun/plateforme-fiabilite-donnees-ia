@@ -4,9 +4,10 @@ Plateforme centralisée destinée à surveiller plusieurs pipelines de données,
 contrôler leur fiabilité, historiser leurs incidents et évaluer leur aptitude à
 alimenter des usages analytiques ou d'intelligence artificielle.
 
-Le projet est actuellement dans sa phase de cadrage. Aucun composant de
-production n'est encore déployé. Le socle local est développé par sprints
-documentés.
+Le projet dispose désormais d'un socle local fonctionnel et d'un premier
+connecteur validé sur les métadonnées réelles du pipeline Mobility. Aucun
+composant de production n'est encore déployé. Le développement reste organisé
+en sprints documentés.
 
 ## Principes directeurs
 
@@ -21,7 +22,9 @@ documentés.
 
 - [Sprint 0 — État des lieux et cadrage](docs/sprints/sprint-00.md)
 - [Sprint 1 — Socle local et modèle commun](docs/sprints/sprint-01.md)
+- [Sprint 2 — Connecteur Mobility](docs/sprints/sprint-02.md)
 - [Contrat fonctionnel minimal](docs/contracts/contrat-fonctionnel-minimal.md)
+- [Mapping du connecteur Mobility](docs/contracts/mapping-mobility.md)
 - [Feuille de route des sprints](docs/roadmap.md)
 - [Modèle de données commun](docs/architecture/modele-commun.md)
 
@@ -79,3 +82,19 @@ docker compose --profile tools run --rm migrate alembic check
 
 La migration n'est volontairement pas exécutée automatiquement au démarrage de
 l'API. Une évolution du schéma reste ainsi une opération visible et contrôlée.
+
+## Collecte locale de Mobility
+
+Le connecteur lit uniquement
+`schema_analytics.fct_pipeline_runs`, dans une transaction PostgreSQL forcée en
+lecture seule. Renseigner dans `.env` une URL vers la base Mobility accessible
+depuis Docker, puis exécuter :
+
+```bash
+docker compose --profile tools run --rm mobility_collector
+```
+
+Le rapport JSON indique le nombre de lignes lues, insérées ou déjà présentes,
+ainsi que tout DAG ou statut non reconnu. Il n'affiche ni le DSN ni les messages
+d'erreur sources. Le mapping exact et les limites du connecteur sont décrits
+dans [le contrat Mobility](docs/contracts/mapping-mobility.md).
