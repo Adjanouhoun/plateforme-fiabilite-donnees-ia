@@ -75,6 +75,7 @@ def _isolated_definitions(monkeypatch: pytest.MonkeyPatch) -> tuple[PipelineDefi
             display_name=definition.display_name,
             description=definition.description,
             expected_frequency_minutes=definition.expected_frequency_minutes,
+            dbt_source_unique_ids=definition.dbt_source_unique_ids,
         )
         for definition in mobility_collector.PIPELINE_DEFINITIONS
     )

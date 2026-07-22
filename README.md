@@ -25,6 +25,7 @@ en sprints documentés.
 - [Sprint 2 — Connecteur Mobility](docs/sprints/sprint-02.md)
 - [Sprint 3 — Contrôles et incidents déterministes](docs/sprints/sprint-03.md)
 - [Sprint 4 — Interface Streamlit multi-pipelines](docs/sprints/sprint-04.md)
+- [Sprint 5 — Dépendances et impact](docs/sprints/sprint-05.md)
 - [Contrat fonctionnel minimal](docs/contracts/contrat-fonctionnel-minimal.md)
 - [Mapping du connecteur Mobility](docs/contracts/mapping-mobility.md)
 - [Règles de qualité et incidents](docs/contracts/regles-qualite-incidents.md)
@@ -83,6 +84,16 @@ L'interface est disponible sur `http://127.0.0.1:8501`. Par défaut,
 `OPERATOR_NAME` est vide et les incidents sont consultables en lecture seule.
 Renseigner explicitement cette variable dans `.env` pour autoriser les actions
 d'acquittement et de clôture en environnement local.
+
+Importer le lineage structurel dbt Mobility après la collecte des exécutions :
+
+```bash
+docker compose --profile tools run --rm mobility_lineage_collector
+```
+
+Le manifeste est monté en lecture seule. Son chemin hôte est configuré par
+`MOBILITY_DBT_MANIFEST_HOST_PATH`. Cet import ne constitue pas une preuve de
+lineage d'exécution.
 
 ## Validation locale
 

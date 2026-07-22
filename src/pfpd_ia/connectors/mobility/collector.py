@@ -234,6 +234,7 @@ def _upsert_asset(
             column: list(allowed_types) for column, allowed_types in EXPECTED_SOURCE_COLUMNS.items()
         },
         "filter": {"dag_id": definition.dag_id},
+        "dbt_unique_id": definition.monitoring_asset_dbt_unique_id,
     }
     statement = (
         insert(DataAsset)
