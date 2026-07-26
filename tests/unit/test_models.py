@@ -6,6 +6,7 @@ def test_common_model_tables_are_registered() -> None:
     assert set(Base.metadata.tables) == {
         "observability.data_assets",
         "observability.incident_events",
+        "observability.incident_explanations",
         "observability.incidents",
         "observability.lineage_edges",
         "observability.pipeline_runs",

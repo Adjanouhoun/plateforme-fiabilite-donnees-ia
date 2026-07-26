@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     app_environment: Literal["local", "test", "production"] = "local"
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     database_url: str = Field(min_length=1)
+    gemini_enabled: bool = False
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = Field(default="gemini-3.5-flash-lite", min_length=1)
 
 
 @lru_cache

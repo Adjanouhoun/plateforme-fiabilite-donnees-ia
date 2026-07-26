@@ -10,6 +10,7 @@ from pfpd_ia.dashboard.queries import (
     get_portfolio_kpis,
     list_assets,
     list_checks,
+    list_incident_explanations,
     list_incident_exposure,
     list_incidents,
     list_lineage,
@@ -149,6 +150,7 @@ def test_dashboard_queries_use_only_the_common_model() -> None:
         assert len(list_runs(session, pipeline_key)) == 1
         assert len(list_checks(session, pipeline_key)) == 1
         assert len(list_incidents(session, pipeline_key)) == 1
+        assert list_incident_explanations(session, incident.id) == []
         assert len(list_assets(session, pipeline_key)) == 2
         assert len(list_lineage(session, pipeline_key)) == 1
         exposure = list_incident_exposure(session, pipeline_key)

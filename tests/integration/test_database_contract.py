@@ -18,6 +18,7 @@ def test_migration_creates_expected_tables() -> None:
     assert set(inspector.get_table_names(schema="observability")) == {
         "data_assets",
         "incident_events",
+        "incident_explanations",
         "incidents",
         "lineage_edges",
         "pipeline_runs",
