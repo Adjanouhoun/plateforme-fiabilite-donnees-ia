@@ -18,6 +18,7 @@ erDiagram
     DATA_ASSETS ||--o{ QUALITY_CHECKS : recoit
     QUALITY_CHECKS o|--o{ INCIDENTS : declenche
     INCIDENTS ||--o{ INCIDENT_EVENTS : historise
+    INCIDENTS ||--o{ INCIDENT_EXPLANATIONS : explique
     DATA_ASSETS ||--o{ LINEAGE_EDGES : source
     DATA_ASSETS ||--o{ LINEAGE_EDGES : cible
 ```
@@ -60,6 +61,13 @@ déclarée ou inconnue.
 Historique append-only prévu pour les changements d'état et actions associées à
 un incident. Cette table technique satisfait l'exigence de traçabilité du
 contrat fonctionnel.
+
+### `incident_explanations`
+
+Historique append-only des explications produites pour un incident. Chaque ligne
+conserve le paquet factuel assaini, la sortie structurée, le fournisseur, le
+modèle éventuel, l'horodatage et le motif du mode dégradé. Cette table ne porte
+aucun état décisionnel et ne modifie pas le cycle de vie de l'incident.
 
 ### `lineage_edges`
 

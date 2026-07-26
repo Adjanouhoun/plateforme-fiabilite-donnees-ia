@@ -415,6 +415,25 @@ def list_incident_events(session: Session, incident_id: uuid.UUID) -> list[dict[
     )
 
 
+def list_incident_explanations(session: Session, incident_id: uuid.UUID) -> list[dict[str, Any]]:
+    return list(
+        session.execute(
+            text(
+                """
+                SELECT
+                    id, provider, model, generated_at, is_ai_generated,
+                    degraded_reason, input_schema_version,
+                    output_schema_version, explanation
+                FROM observability.incident_explanations
+                WHERE incident_id = :incident_id
+                ORDER BY generated_at DESC, id DESC
+                """
+            ),
+            {"incident_id": incident_id},
+        ).mappings()
+    )
+
+
 def list_assets(session: Session, pipeline_key: str) -> list[dict[str, Any]]:
     return list(
         session.execute(

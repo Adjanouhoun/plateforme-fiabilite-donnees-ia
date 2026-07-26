@@ -253,6 +253,36 @@ class IncidentEvent(Base):
     details: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
 
 
+class IncidentExplanation(Base):
+    __tablename__ = "incident_explanations"
+    __table_args__ = (
+        CheckConstraint("length(trim(provider)) > 0", name="non_empty_provider"),
+        CheckConstraint("length(trim(input_schema_version)) > 0", name="non_empty_input_schema"),
+        CheckConstraint("length(trim(output_schema_version)) > 0", name="non_empty_output_schema"),
+        CheckConstraint(
+            "is_ai_generated = false OR model IS NOT NULL", name="ai_generation_has_model"
+        ),
+        Index("ix_incident_explanations_incident_generated", "incident_id", "generated_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    incident_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("observability.incidents.id", ondelete="RESTRICT"), nullable=False
+    )
+    provider: Mapped[str] = mapped_column(String(120), nullable=False)
+    model: Mapped[str | None] = mapped_column(String(255))
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    is_ai_generated: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    degraded_reason: Mapped[str | None] = mapped_column(String(120))
+    input_schema_version: Mapped[str] = mapped_column(String(20), nullable=False)
+    output_schema_version: Mapped[str] = mapped_column(String(20), nullable=False)
+    fact_package: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    explanation: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
 class LineageEdge(Base):
     __tablename__ = "lineage_edges"
     __table_args__ = (

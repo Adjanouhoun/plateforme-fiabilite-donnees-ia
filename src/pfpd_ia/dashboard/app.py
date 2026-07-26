@@ -8,6 +8,10 @@ from typing import Any
 import streamlit as st
 from sqlalchemy.exc import SQLAlchemyError
 
+from pfpd_ia.ai.facts import FactPackageUnavailable
+from pfpd_ia.ai.gemini import gemini_provider_from_settings
+from pfpd_ia.ai.service import generate_and_persist_explanation
+from pfpd_ia.config import get_settings
 from pfpd_ia.dashboard.queries import (
     PipelineSummary,
     PortfolioKpis,
@@ -18,6 +22,7 @@ from pfpd_ia.dashboard.queries import (
     list_assets,
     list_checks,
     list_incident_events,
+    list_incident_explanations,
     list_incident_exposure,
     list_incidents,
     list_lineage,
@@ -297,6 +302,10 @@ def _render_incidents(pipeline_key: str, operator_name: str) -> None:
         events_by_incident = {
             incident["id"]: list_incident_events(session, incident["id"]) for incident in incidents
         }
+        explanations_by_incident = {
+            incident["id"]: list_incident_explanations(session, incident["id"])
+            for incident in incidents
+        }
     if not incidents:
         st.info("Aucun incident n’est enregistré pour ce pipeline.")
         return
@@ -359,6 +368,57 @@ def _render_incidents(pipeline_key: str, operator_name: str) -> None:
                 hide_index=True,
                 width="stretch",
             )
+            st.markdown("#### Explications contrôlées")
+            st.caption(
+                "Les faits ci-dessus restent la source de vérité. Les textes ci-dessous "
+                "n'altèrent ni le contrôle ni l'état de l'incident."
+            )
+            if st.button("Générer une explication", key=f"explain-{incident['id']}"):
+                try:
+                    settings = get_settings()
+                    result = generate_and_persist_explanation(
+                        factory,
+                        incident_id=incident["id"],
+                        provider=gemini_provider_from_settings(settings),
+                    )
+                    if result.is_ai_generated:
+                        st.success("Explication Gemini générée et enregistrée.")
+                    else:
+                        st.warning(
+                            "Gemini est indisponible ou non configuré : "
+                            "une explication factuelle déterministe a été enregistrée."
+                        )
+                    st.rerun()
+                except FactPackageUnavailable:
+                    st.error("Les faits minimaux requis ne sont pas disponibles pour cet incident.")
+
+            explanations = explanations_by_incident[incident["id"]]
+            if not explanations:
+                st.info("Aucune explication n'a encore été générée pour cet incident.")
+            for explanation_row in explanations:
+                explanation = explanation_row["explanation"]
+                origin = (
+                    "Contenu généré par IA"
+                    if explanation_row["is_ai_generated"]
+                    else ("Synthèse déterministe")
+                )
+                with st.expander(
+                    f"{origin} — {_format_datetime(explanation_row['generated_at'])}",
+                    expanded=False,
+                ):
+                    st.write(explanation.get("summary", "Résumé indisponible"))
+                    st.write("Faits utilisés")
+                    st.write(explanation.get("facts_used", []))
+                    st.write("Inconnues déclarées")
+                    st.write(explanation.get("unknowns", []))
+                    st.write("Pistes de diagnostic")
+                    st.write(explanation.get("diagnostic_leads", []))
+                    st.caption(
+                        f"Fournisseur : {explanation_row['provider']} · "
+                        f"Modèle : {explanation_row['model'] or 'aucun'} · "
+                        f"Confiance déclarée : "
+                        f"{explanation.get('declared_confidence', 'indisponible')}"
+                    )
             if (
                 operator_name
                 and incident["status"] == "open"
