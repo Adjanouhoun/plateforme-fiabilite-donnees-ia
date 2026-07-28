@@ -26,8 +26,11 @@ en sprints documentés.
 - [Sprint 3 — Contrôles et incidents déterministes](docs/sprints/sprint-03.md)
 - [Sprint 4 — Interface Streamlit multi-pipelines](docs/sprints/sprint-04.md)
 - [Sprint 5 — Dépendances et impact](docs/sprints/sprint-05.md)
+- [Sprint 6 — Assistance IA contrôlée](docs/sprints/sprint-06.md)
+- [Sprint 7 — Second connecteur et portabilité](docs/sprints/sprint-07.md)
 - [Contrat fonctionnel minimal](docs/contracts/contrat-fonctionnel-minimal.md)
 - [Mapping du connecteur Mobility](docs/contracts/mapping-mobility.md)
+- [Mapping du connecteur emploi](docs/contracts/mapping-assistant-candidature-emploi.md)
 - [Règles de qualité et incidents](docs/contracts/regles-qualite-incidents.md)
 - [Feuille de route des sprints](docs/roadmap.md)
 - [Modèle de données commun](docs/architecture/modele-commun.md)
@@ -124,3 +127,13 @@ les contrôles créés, les échecs, les absences de mesure, les incidents actif
 ainsi que tout DAG ou statut non reconnu. Il n'affiche ni le DSN ni les messages
 d'erreur sources. Le mapping exact et les limites du connecteur sont décrits
 dans [le contrat Mobility](docs/contracts/mapping-mobility.md).
+
+## Collecte locale de l'assistant candidature emploi
+
+Le connecteur lit uniquement les métadonnées de `app.sync_runs`. Les CV, les candidatures et le contenu des offres sont hors périmètre. Après avoir renseigné une URL de lecture seule dans `EMPLOYMENT_DATABASE_URL`, exécuter :
+
+```bash
+docker compose --profile tools run --rm employment_collector
+```
+
+Le mapping, les champs indisponibles et les contrôles sont documentés dans [le contrat emploi](docs/contracts/mapping-assistant-candidature-emploi.md).
