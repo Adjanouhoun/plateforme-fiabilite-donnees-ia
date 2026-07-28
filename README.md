@@ -137,3 +137,14 @@ docker compose --profile tools run --rm employment_collector
 ```
 
 Le mapping, les champs indisponibles et les contrôles sont documentés dans [le contrat emploi](docs/contracts/mapping-assistant-candidature-emploi.md).
+
+Pour relancer la collecte locale sans inscrire le mot de passe lecteur dans un
+fichier, utiliser le lanceur qui récupère le secret dans le trousseau macOS :
+
+```bash
+./scripts/run_employment_collector_local.sh
+```
+
+Le conteneur PostgreSQL de l'application emploi doit être démarré. Le script
+relie uniquement son réseau Docker interne au réseau de la plateforme ; aucun
+port de base de données n'est publié sur le Mac.
