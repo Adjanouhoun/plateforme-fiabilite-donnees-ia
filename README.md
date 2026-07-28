@@ -4,10 +4,27 @@ Plateforme centralisée destinée à surveiller plusieurs pipelines de données,
 contrôler leur fiabilité, historiser leurs incidents et évaluer leur aptitude à
 alimenter des usages analytiques ou d'intelligence artificielle.
 
-Le projet dispose désormais d'un socle local fonctionnel et d'un premier
-connecteur validé sur les métadonnées réelles du pipeline Mobility. Aucun
-composant de production n'est encore déployé. Le développement reste organisé
-en sprints documentés.
+Le projet est déployé en production sur OVHcloud et reste organisé en sprints
+documentés. Il observe actuellement quatre pipelines issus de deux systèmes
+sources, sans répliquer leurs données métier ni exposer leurs bases.
+
+**Accès public :** [fiabilite.amadouadjanouhoun.fr](https://fiabilite.amadouadjanouhoun.fr)
+
+## État validé en production
+
+Au 28 juillet 2026, la plateforme regroupe :
+
+- 4 pipelines actifs : Vélib, trafic routier, France Travail et La Bonne
+  Alternance ;
+- 500 exécutions historisées ;
+- 20 actifs de données et 14 relations de lineage dbt ;
+- 50 tests dbt ciblés réussis lors de la remédiation Mobility ;
+- une exposition HTTPS via Nginx, les services applicatifs et PostgreSQL restant
+  accessibles uniquement sur le réseau interne du VPS.
+
+Les collecteurs emploient des comptes PostgreSQL dédiés, limités à la lecture
+des seules tables contractuelles : `schema_analytics.fct_pipeline_runs` pour
+Mobility et `app.sync_runs` pour l'assistant emploi.
 
 ## Principes directeurs
 
@@ -17,6 +34,20 @@ en sprints documentés.
 - séparation entre faits mesurés et explications produites par l'IA ;
 - développement et validation en local avant déploiement sur OVHcloud ;
 - dimensionnement de la production fondé sur des mesures réelles.
+
+## Architecture supervisée
+
+Deux connecteurs indépendants normalisent les métadonnées vers le même modèle
+PostgreSQL `observability` :
+
+| Système source | Pipelines observés | Données lues |
+| --- | --- | --- |
+| Plateforme Mobilité | Vélib, trafic routier | exécutions dbt consolidées uniquement |
+| Assistant candidature emploi | France Travail, La Bonne Alternance | métadonnées de synchronisation uniquement |
+
+Les règles de qualité et la gestion d'incidents sont déterministes. Gemini est
+optionnel et encadré : il peut expliquer des faits déjà mesurés, mais ne décide
+ni de l'état de santé d'un pipeline ni d'une action opérationnelle.
 
 ## Documentation
 
@@ -149,3 +180,25 @@ fichier, utiliser le lanceur qui récupère le secret dans le trousseau macOS :
 Le conteneur PostgreSQL de l'application emploi doit être démarré. Le script
 relie uniquement son réseau Docker interne au réseau de la plateforme ; aucun
 port de base de données n'est publié sur le Mac.
+
+## Déploiement OVHcloud
+
+Le déploiement de production est décrit dans `deploy/ovh/`. Il démarre seulement
+PostgreSQL, l'API FastAPI et le dashboard Streamlit ; les collecteurs sont des
+commandes visibles et ponctuelles. Les variables sensibles résident dans le
+fichier `.env` privé du VPS et ne doivent jamais être ajoutées au dépôt.
+
+Après une mise à jour validée, appliquer les migrations puis démarrer les
+services avec le profil de production :
+
+```bash
+docker compose -f docker-compose.yml -f deploy/ovh/docker-compose.prod.yml \
+  run --rm migrate
+docker compose -f docker-compose.yml -f deploy/ovh/docker-compose.prod.yml \
+  up -d postgres_observability api dashboard
+```
+
+Les collecteurs de production rejoignent uniquement les réseaux Docker internes
+de leurs sources. Avant une collecte Mobility, vérifier que la vue dbt
+`schema_analytics.fct_pipeline_runs` est bien matérialisée ; cette vérification
+est documentée dans le [Sprint 8](docs/sprints/sprint-08.md).
