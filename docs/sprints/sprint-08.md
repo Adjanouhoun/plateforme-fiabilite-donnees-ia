@@ -80,3 +80,27 @@ Les comptes `mobility_reader` et `employment_reader` doivent être limités à l
 lecture des seules tables contractuelles. Les DSN sont conservés dans le fichier
 `.env` du VPS et ne sont jamais versionnés. Une collecte manuelle initialise le
 portefeuille, sans exposition réseau supplémentaire.
+
+### Collecte emploi validée
+
+Le raccordement de l'assistant candidature emploi a été validé le 28 juillet
+2026 avec le compte `employment_reader`, limité à `SELECT` sur
+`app.sync_runs`. La collecte a lu neuf lignes de métadonnées en lecture seule et
+a créé les deux pipelines de production suivants :
+
+- `emploi.france_travail` : 3 exécutions ;
+- `emploi.la_bonne_alternance` : 6 exécutions.
+
+### Précondition Mobility non satisfaite
+
+La base Mobility du VPS ne contient pas la relation contractuelle
+`schema_analytics.fct_pipeline_runs`. Elle contient les tables métier et les
+tables d'ingestion, mais pas le modèle dbt de supervision requis par le
+connecteur. Aucune substitution par une table métier n'est autorisée : cela
+briserait le contrat de données de la plateforme.
+
+Le chargement des pipelines Mobility reste donc bloqué jusqu'à la restauration
+et l'exécution du modèle dbt `fct_pipeline_runs` dans le projet Mobility. Une
+fois cette précondition satisfaite, le compte `mobility_reader` devra recevoir
+uniquement `USAGE` sur `schema_analytics` et `SELECT` sur cette relation, puis
+le collecteur Mobility pourra être exécuté.
