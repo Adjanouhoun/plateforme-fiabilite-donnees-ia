@@ -28,6 +28,7 @@ en sprints documentés.
 - [Sprint 5 — Dépendances et impact](docs/sprints/sprint-05.md)
 - [Sprint 6 — Assistance IA contrôlée](docs/sprints/sprint-06.md)
 - [Sprint 7 — Second connecteur et portabilité](docs/sprints/sprint-07.md)
+- [Sprint 8 — Qualification et déploiement OVHcloud](docs/sprints/sprint-08.md)
 - [Contrat fonctionnel minimal](docs/contracts/contrat-fonctionnel-minimal.md)
 - [Mapping du connecteur Mobility](docs/contracts/mapping-mobility.md)
 - [Mapping du connecteur emploi](docs/contracts/mapping-assistant-candidature-emploi.md)

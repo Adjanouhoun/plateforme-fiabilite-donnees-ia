@@ -1,0 +1,12 @@
+services:
+  postgres_observability:
+    mem_limit: 384m
+    cpus: "0.50"
+
+  api:
+    mem_limit: 256m
+    cpus: "0.35"
+
+  dashboard:
+    mem_limit: 512m
+    cpus: "0.50"
