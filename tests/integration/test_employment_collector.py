@@ -85,7 +85,7 @@ def _source_fixture() -> None:
         connection.execute(
             text(
                 "INSERT INTO app.sync_runs VALUES "
-                "('ft::1', 'france_travail', 'success', :start, :end, 100, 4, 4, NULL), "
+                "('ft::1', 'france_travail', 'succeeded', :start, :end, 100, 4, 4, NULL), "
                 "('lba::1', 'la_bonne_alternance', 'failed', :start, :end, 0, 3, 2, 'password=visible')"
             ),
             {"start": now, "end": now + timedelta(minutes=2)},

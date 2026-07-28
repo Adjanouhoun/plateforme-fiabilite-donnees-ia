@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Engine, create_engine, func, select, text
+from sqlalchemy import Engine, create_engine, func, select, text, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -214,6 +214,7 @@ def _upsert_asset(
 def _status(value: str) -> RunStatus:
     return {
         "success": RunStatus.SUCCEEDED,
+        "succeeded": RunStatus.SUCCEEDED,
         "failed": RunStatus.FAILED,
         "running": RunStatus.RUNNING,
     }.get(value, RunStatus.UNKNOWN)
@@ -255,7 +256,13 @@ def collect_employment_runs(
     definitions = {definition.provider: definition for definition in PIPELINE_DEFINITIONS}
     runs = snapshot.runs
     unknown_statuses = tuple(
-        sorted({run.status for run in runs if run.status not in {"success", "failed", "running"}})
+        sorted(
+            {
+                run.status
+                for run in runs
+                if run.status not in {"success", "succeeded", "failed", "running"}
+            }
+        )
     )
     inserted_runs = inserted_checks = failed_checks = not_measured_checks = 0
     with target_session_factory.begin() as session:
@@ -330,6 +337,21 @@ def collect_employment_runs(
             )
             target_id = session.execute(statement).scalar_one_or_none()
             if target_id is None:
+                session.execute(
+                    update(PipelineRun)
+                    .where(
+                        PipelineRun.pipeline_id == pipeline_ids[run.provider],
+                        PipelineRun.external_run_id == run.id,
+                    )
+                    .values(
+                        ended_at=run.completed_at,
+                        status=_status(run.status),
+                        rows_read=run.offers_seen,
+                        error_message=sanitize_error_message(
+                            run.error_summary, settings.employment_error_max_length
+                        ),
+                    )
+                )
                 target_id = session.execute(
                     select(PipelineRun.id).where(
                         PipelineRun.pipeline_id == pipeline_ids[run.provider],
@@ -342,7 +364,9 @@ def collect_employment_runs(
         for definition in PIPELINE_DEFINITIONS:
             scoped = [run for run in runs if run.provider == definition.provider]
             successful = [
-                run for run in scoped if run.status == "success" and run.completed_at is not None
+                run
+                for run in scoped
+                if run.status in {"success", "succeeded"} and run.completed_at is not None
             ]
             fresh = evaluate_freshness(
                 latest_success_at=max((run.completed_at for run in successful), default=None),
@@ -388,7 +412,7 @@ def collect_employment_runs(
                     inserted_checks += int(inserted)
                     failed_checks += int(inserted and status == CheckStatus.FAILED)
                     not_measured_checks += int(inserted and status == CheckStatus.NOT_MEASURED)
-                if run.status == "success":
+                if run.status in {"success", "succeeded"}:
                     references.append(run.offers_seen)
         active = session.scalar(
             select(func.count())

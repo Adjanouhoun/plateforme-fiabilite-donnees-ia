@@ -19,7 +19,7 @@ La transaction de la source est explicitement déclarée en lecture seule avant 
 | --- | --- | --- |
 | `id` | `pipeline_runs.external_run_id` | identifiant externe idempotent |
 | `provider` | rattachement à un pipeline | filtre contractuel |
-| `status` | `pipeline_runs.status` | `success`, `failed`, `running`; autre valeur = `unknown` |
+| `status` | `pipeline_runs.status` | `success` ou `succeeded`, `failed`, `running`; autre valeur = `unknown` |
 | `started_at`, `completed_at` | début et fin | fin absente admise pour une exécution en cours |
 | `offers_seen` | `rows_read` | compteur observé, pas un nombre d'offres exportées |
 | `segments_expected`, `segments_completed` | contrôle `completeness` | égalité stricte des compteurs |
