@@ -10,3 +10,26 @@ services:
   dashboard:
     mem_limit: 512m
     cpus: "0.50"
+
+  mobility_collector:
+    mem_limit: 256m
+    cpus: "0.35"
+    networks:
+      - default
+      - mobility_source
+
+  employment_collector:
+    mem_limit: 256m
+    cpus: "0.35"
+    networks:
+      - default
+      - employment_source
+
+networks:
+  mobility_source:
+    name: ${MOBILITY_SOURCE_NETWORK:-data-pipeline-mobility_default}
+    external: true
+
+  employment_source:
+    name: ${EMPLOYMENT_SOURCE_NETWORK:-assistant-candidature-emploi-ia_default}
+    external: true

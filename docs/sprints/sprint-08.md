@@ -63,3 +63,20 @@ dans le fichier `.env` du VPS, non versionné.
 En cas de retour arrière, arrêter les trois services de la plateforme et
 restaurer la révision Git précédente. Les conteneurs, bases et configurations
 de Mobility et de l'assistant emploi ne doivent pas être modifiés.
+
+## Raccordement des sources — suite du Sprint 8
+
+Après le déploiement initial, les tables de la plateforme sont volontairement
+vides : les collecteurs ne s'exécutent pas au démarrage afin de préserver une
+frontière nette avec les pipelines observés. Le profil de production rattache
+donc chaque collecteur uniquement au réseau Docker interne de sa source :
+
+- Mobility : réseau `data-pipeline-mobility_default`, base
+  `postgres_destination` ;
+- assistant emploi : réseau `assistant-candidature-emploi-ia_default`, base
+  `assistant-candidature-emploi-ia-postgres-1`.
+
+Les comptes `mobility_reader` et `employment_reader` doivent être limités à la
+lecture des seules tables contractuelles. Les DSN sont conservés dans le fichier
+`.env` du VPS et ne sont jamais versionnés. Une collecte manuelle initialise le
+portefeuille, sans exposition réseau supplémentaire.
