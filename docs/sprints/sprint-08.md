@@ -91,16 +91,27 @@ a créé les deux pipelines de production suivants :
 - `emploi.france_travail` : 3 exécutions ;
 - `emploi.la_bonne_alternance` : 6 exécutions.
 
-### Précondition Mobility non satisfaite
+### Remédiation Mobility validée
 
-La base Mobility du VPS ne contient pas la relation contractuelle
-`schema_analytics.fct_pipeline_runs`. Elle contient les tables métier et les
-tables d'ingestion, mais pas le modèle dbt de supervision requis par le
-connecteur. Aucune substitution par une table métier n'est autorisée : cela
-briserait le contrat de données de la plateforme.
+La relation contractuelle `schema_analytics.fct_pipeline_runs` était absente de
+la base Mobility du VPS, alors que le modèle dbt correspondant existait dans le
+dépôt et dans les artefacts compilés. Aucune table métier n'a été substituée.
 
-Le chargement des pipelines Mobility reste donc bloqué jusqu'à la restauration
-et l'exécution du modèle dbt `fct_pipeline_runs` dans le projet Mobility. Une
-fois cette précondition satisfaite, le compte `mobility_reader` devra recevoir
-uniquement `USAGE` sur `schema_analytics` et `SELECT` sur cette relation, puis
-le collecteur Mobility pourra être exécuté.
+Le 28 juillet 2026, les trois vues de supervision ont été matérialisées depuis
+le conteneur Airflow existant : `fct_ingestion_runs`,
+`fct_traffic_ingestion_runs` et `fct_pipeline_runs`. Les 50 tests dbt ciblés
+ont réussi. Le compte `mobility_reader` a ensuite reçu uniquement `USAGE` sur
+`schema_analytics` et `SELECT` sur `fct_pipeline_runs`.
+
+La collecte Mobility en lecture seule a chargé 491 exécutions :
+
+- `mobility.velib` : 245 exécutions ;
+- `mobility.road_traffic` : 246 exécutions.
+
+Le lineage structurel dbt a aussi été importé : 18 actifs et 14 dépendances,
+répartis sur les deux pipelines Mobility. Le portefeuille de production contient
+désormais les quatre pipelines attendus.
+
+La disparition initiale de la vue n'a pas été attribuée à une cause certaine.
+Le contrôle à conserver est donc la présence de `fct_pipeline_runs` après les
+exécutions dbt Mobility, avant toute collecte de la plateforme.
