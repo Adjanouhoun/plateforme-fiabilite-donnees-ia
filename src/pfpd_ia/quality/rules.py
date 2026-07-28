@@ -156,6 +156,32 @@ def evaluate_consistency(
     )
 
 
+def evaluate_completeness(
+    *, expected_count: int | None, completed_count: int | None
+) -> CheckEvaluation:
+    """Vérifie une paire de compteurs sans interpréter leur métier."""
+    expected = {"formula": "completed_count = expected_count"}
+    if expected_count is None or completed_count is None:
+        return CheckEvaluation(
+            check_type="completeness",
+            severity=Severity.ERROR,
+            status=CheckStatus.NOT_MEASURED,
+            observed_value={"expected_count": expected_count, "completed_count": completed_count},
+            expected_rule=expected,
+        )
+    return CheckEvaluation(
+        check_type="completeness",
+        severity=Severity.ERROR,
+        status=CheckStatus.PASSED if completed_count == expected_count else CheckStatus.FAILED,
+        observed_value={
+            "expected_count": expected_count,
+            "completed_count": completed_count,
+            "difference": completed_count - expected_count,
+        },
+        expected_rule=expected,
+    )
+
+
 def evaluate_schema(
     *, actual_columns: dict[str, str], expected_columns: dict[str, tuple[str, ...]]
 ) -> CheckEvaluation:

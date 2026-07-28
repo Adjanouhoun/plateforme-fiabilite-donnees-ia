@@ -72,6 +72,25 @@ services:
         condition: service_healthy
     profiles: ["tools"]
 
+  employment_collector:
+    build:
+      context: .
+      target: runtime
+    environment:
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-local}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+      EMPLOYMENT_DATABASE_URL: ${EMPLOYMENT_DATABASE_URL:-}
+      EMPLOYMENT_OWNER: ${EMPLOYMENT_OWNER:-data-engineering}
+      EMPLOYMENT_ENVIRONMENT: ${EMPLOYMENT_ENVIRONMENT:-local}
+      EMPLOYMENT_CRITICALITY: ${EMPLOYMENT_CRITICALITY:-medium}
+      EMPLOYMENT_ERROR_MAX_LENGTH: ${EMPLOYMENT_ERROR_MAX_LENGTH:-2000}
+    command: ["python", "-m", "pfpd_ia.connectors.employment.cli"]
+    depends_on:
+      postgres_observability:
+        condition: service_healthy
+    profiles: ["tools"]
+
   api:
     build:
       context: .
